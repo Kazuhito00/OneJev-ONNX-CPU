@@ -1,0 +1,4 @@
+# Runtime. That is the whole list (see pyproject.toml; uv is the way to install: `uv sync`).
+onnxruntime>=1.20       # or onnxruntime-gpu for CUDA, never both: see the GPU section of the README
+numpy>=1.26
+pillow>=10.0            # image decoding; text-only use does not import it

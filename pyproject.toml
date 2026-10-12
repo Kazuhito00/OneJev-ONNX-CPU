@@ -1,0 +1,71 @@
+[project]
+name = "onejev-onnx-cpu"
+version = "0.1.0"
+description = "OneJev (0.8B / 4B; typed decisions, text and images) with onnxruntime + numpy only: no torch, no transformers. CPU, and GPU (CUDA) with the gpu extra"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+# Runtime, apart from onnxruntime itself (see below). pillow is only imported when a request carries images.
+dependencies = [
+    "numpy>=1.26",
+    "pillow>=10.0",
+]
+
+# onnxruntime (CPU) and onnxruntime-gpu write into the same `onnxruntime/` directory, so they must never be installed together.
+# The CPU build is the default dependency group (installed by a plain `uv sync`); `uv sync --extra gpu --no-group cpu` swaps it
+# for the GPU build. uv refuses to resolve an environment that has both (see [tool.uv] conflicts).
+[project.optional-dependencies]
+gpu = [
+    "onnxruntime-gpu>=1.20",
+]
+
+[dependency-groups]
+cpu = [
+    "onnxruntime>=1.20",
+]
+# Only for tests/. The tests need no model and no onnxruntime build in particular.
+test = [
+    "pytest>=8",
+]
+# Only for the oracle gate in verify/check_tokenizer_fuzz.py. Never imported at runtime.
+verify = [
+    "tokenizers>=0.20",
+]
+# Only for demo_inference_webcam.py (camera capture and the live window). Never imported by onejev_decide.
+webcam = [
+    "opencv-python>=4.8",
+]
+# Only for export/ and the oracle gates in verify/ that need the reference model. Never imported at runtime.
+export = [
+    "torch>=2.6",
+    "torchvision>=0.21",
+    "transformers>=5.14",
+    "accelerate>=1.0",
+    "safetensors>=0.4",
+    "tokenizers>=0.20",
+    "onnx>=1.17",
+    "pydantic>=2.0",
+    "jinja2>=3.1",
+    "fastapi>=0.110",
+]
+
+[tool.uv]
+default-groups = ["cpu"]
+conflicts = [
+    [
+        { group = "cpu" },
+        { extra = "gpu" },
+    ],
+]
+
+# The code is run from the checkout (`uv run demo_inference_text.py`); it can also be installed
+# (`uv pip install git+https://github.com/Kazuhito00/OneJev-ONNX-CPU`) to get `import onejev_decide`.
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["onejev_decide"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
